@@ -17,15 +17,25 @@
     }],
     "require": {
         "box/spout": "^3.0",
+<<<<<<< HEAD
         "genealogiawebsite/core": "^5.0|^6.0",
         "genealogiawebsite/files": "^4.0",
         "genealogiawebsite/io": "^2.0",
         "genealogiawebsite/track-who": "^2.0",
         "genealogiawebsite/helpers": "^2.0"
+=======
+        "genealogiawebsite/core": "^5.0|^6.0",
+        "genealogiawebsite/enums": "^2.0",
+        "genealogiawebsite/helpers": "^2.0",
+        "genealogiawebsite/io": "^2.0",
+        "genealogiawebsite/files": "^4.0",
+        "genealogiawebsite/track-who": "^2.0"
+>>>>>>> upstream/master
     },
     "autoload": {
         "psr-4": {
-            "LaravelEnso\\DataExport\\": "src/"
+            "LaravelEnso\\DataExport\\": "src/",
+            "LaravelEnso\\DataExport\\Database\\Factories\\": "database/factories/"
         }
     },
     "extra": {
@@ -33,6 +43,7 @@
             "providers": [
                 "LaravelEnso\\DataExport\\AppServiceProvider",
                 "LaravelEnso\\DataExport\\AuthServiceProvider",
+                "LaravelEnso\\DataExport\\EnumServiceProvider",
                 "LaravelEnso\\DataExport\\FileServiceProvider"
             ]
         }
