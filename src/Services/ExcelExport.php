@@ -47,8 +47,8 @@ class ExcelExport
         try {
             $this->export();
         } catch (Throwable $throwable) {
-            $this->failed();
             Log::debug($throwable->getMessage());
+            $this->failed();
         }
 
         return $this;
@@ -192,19 +192,21 @@ class ExcelExport
         if ($this->exporter instanceof Notifies) {
             $this->exporter->notify($this->export);
         } else {
-            Collection::wrap($this->notifiables())->each->notify(
-                (new ExportDone($this->export, $this->emailSubject()))
-                    ->onQueue('notifications')
-            );
+            Collection::wrap($this->notifiables())
+                ->each(fn ($notifiable) => $notifiable->notify(
+                    (new ExportDone($this->export, $this->emailSubject()))
+                        ->onQueue('notifications')
+                ));
         }
     }
 
     protected function notifyError(): void
     {
-        Collection::wrap($this->notifiables())->each->notify(
-            (new ExportError($this->export, $this->emailSubject()))
-                ->onQueue('notifications')
-        );
+        Collection::wrap($this->notifiables())
+            ->each(fn ($notifiable) => $notifiable->notify(
+                (new ExportError($this->export, $this->emailSubject()))
+                    ->onQueue('notifications')
+            ));
     }
 
     private function needsNewSheet(): bool
