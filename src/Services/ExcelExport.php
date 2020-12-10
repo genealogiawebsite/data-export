@@ -14,7 +14,6 @@ use Illuminate\Support\Str;
 use LaravelEnso\DataExport\Contracts\AfterHook;
 use LaravelEnso\DataExport\Contracts\BeforeHook;
 use LaravelEnso\DataExport\Contracts\ExportsExcel;
-use LaravelEnso\DataExport\Contracts\Notifies;
 use LaravelEnso\DataExport\Enums\Statuses;
 use LaravelEnso\DataExport\Models\DataExport;
 use LaravelEnso\DataExport\Notifications\ExportDone;
@@ -33,6 +32,7 @@ class ExcelExport
     private int $currentChunk;
     private int $currentSheet;
     private int $rowLimit;
+    private bool $notifies;
 
     public function __construct(DataExport $export, ExportsExcel $exporter)
     {
@@ -40,6 +40,7 @@ class ExcelExport
         $this->exporter = $exporter;
         $this->path = $this->path();
         $this->rowLimit = (int) Config::get('enso.exports.rowLimit');
+        $this->notifies = true;
     }
 
     public function handle()
@@ -50,6 +51,13 @@ class ExcelExport
             $this->failed();
             Log::debug($throwable->getMessage());
         }
+
+        return $this;
+    }
+
+    public function skipNotification(): self
+    {
+        $this->notifies = false;
 
         return $this;
     }
@@ -189,20 +197,18 @@ class ExcelExport
 
     private function notify()
     {
-        if (! $this->exporter instanceof Notifies) {
-            return;
+        if ($this->notifies) {
+            Collection::wrap($this->notifiables())->each->notify(
+                (new ExportDone($this->export, $this->emailSubject()))
+                    ->onQueue('notifications')
+            );
         }
-
-        Collection::wrap($this->notifiables())->each->notify(
-            (new ExportDone($this->export, $this->exporter))
-                ->onQueue('notifications')
-        );
     }
 
     protected function notifyError(): void
     {
         Collection::wrap($this->notifiables())->each->notify(
-            (new ExportError($this->export, $this->exporter))
+            (new ExportError($this->export, $this->emailSubject()))
                 ->onQueue('notifications')
         );
     }
@@ -225,6 +231,13 @@ class ExcelExport
         return method_exists($this->exporter, 'notifiables')
             ? $this->exporter->notifiables($this->export)
             : [$this->export->createdBy];
+    }
+
+    private function emailSubject(): ?string
+    {
+        return method_exists($this->export, 'emailSubject')
+            ? $this->exporter->emailSubject($this->export)
+            : null;
     }
 
     private function failed(): void
